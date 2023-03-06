@@ -47,31 +47,33 @@ def _get_sun_pos(met):
 
 
 def _xy_to_radec(evtdata, hdr):
-    """ Conversion function to go from X/Y coordinates
-        in the FITS file to RA/Dec coordinates.
+    """
+    Conversion function to go from X/Y coordinates
+    in the FITS file to RA/Dec coordinates.
     """
     
     from nustar_pysolar.utils import convert_nustar_time
 
 
-# Parse the header information
+    # Parse the header information
     for field in hdr.keys():
         if field.find('TYPE') != -1:
             if hdr[field] == 'X':
-#                print(hdr[field][5:8])
+                # print(hdr[field][5:8])
                 xval = field[5:8]
             if hdr[field] == 'Y':
-#                print(hdr[field][5:8])
+                # print(hdr[field][5:8])
                 yval = field[5:8]
 
-    ra_ref = hdr['TCRVL'+xval]*u.deg
-    x0 = hdr['TCRPX'+xval]
-    delx = hdr['TCDLT'+xval] * u.deg
+    xunit = u.Unit(hdr[f'TCUNI{xval}'])
+    ra_ref = hdr[f'TCRVL{xval}'] * xunit
+    delx = hdr[f'TCDLT{xval}'] * xunit
+    x0 = hdr[f'TCRPX{xval}']
 
-    dec_ref = hdr['TCRVL'+yval]*u.deg
-    y0 = hdr['TCRPX'+yval]
-    dely = hdr['TCDLT'+yval]*u.deg
-
+    yunit = u.Unit(hdr[f'TCUNI{yval}'])
+    dec_ref = hdr[f'TCRVL{yval}'] * yunit
+    dely = hdr[f'TCDLT{yval}'] * yunit
+    y0 = hdr[f'TCRPX{yval}']
 
     # Make local copies for convenience
     x = evtdata['X']
@@ -80,11 +82,6 @@ def _xy_to_radec(evtdata, hdr):
     # Convert the NuSTAR epoch times to MJD
     met = convert_nustar_time(evtdata['Time'], astropy_time=True)
     
-#     mjdref=hdr['MJDREFI']
-#     met = evtdata['TIME']*u.s + mjdref*u.d
-
-#   time = astropy.time.Time(mjdref*u.d+met, format = 'mjd')
-
     # Convert X and Y to RA/dec
     ra_x = ra_ref + (x - x0) * delx / np.cos(dec_ref)
     dec_y = dec_ref + (y - y0) * dely
